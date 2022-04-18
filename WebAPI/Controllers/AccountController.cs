@@ -42,13 +42,20 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
-        /// Endpoint to get details of the currently signed-in user
+        /// Endpoint to get account details of the given user or of the currently signed-in user.
         /// </summary>
         [HttpGet]
         [Route(nameof(GetUser))]
-        public async Task<ActionResult<ApplicationUserDTO>> GetUser()
+        public async Task<ActionResult<ApplicationUserDTO>> GetUser(string userName)
         {
-            var user = await _userManager.FindByNameAsync(User.Identity.Name);
+            if (userName == null)
+                userName = User.Identity.Name;
+
+            var user = await _userManager.FindByNameAsync(userName);
+
+            if (user == null)
+                return NotFound($"User account {userName} not found.");
+
             var userDto = _mapper.Map<ApplicationUserDTO>(user);
             return userDto;
         }
