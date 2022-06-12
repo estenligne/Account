@@ -32,20 +32,18 @@ namespace WebAPI
         private readonly IWebHostEnvironment _env;
         private readonly string _proxied;
 
-        private void ConfigureMySQL(DbContextOptionsBuilder options, string connectionName)
-        {
-            string connectionString = _configuration.GetConnectionString(connectionName);
-            ServerVersion serverVersion = new MySqlServerVersion("5.7.33");
-            options.UseMySql(connectionString, serverVersion);
-        }
-
         private void ConfigureDatabase(IServiceCollection services)
         {
             DataType.SetDBMS(_configuration["DBMS"]);
 
             if (DataType.UseMySQL)
             {
-                services.AddDbContext<ApplicationDbContext>(options => ConfigureMySQL(options, "MySQL_Connection"));
+                services.AddDbContext<ApplicationDbContext>(options =>
+                {
+                    string connectionString = _configuration.GetConnectionString("MySQL_Connection");
+                    ServerVersion serverVersion = new MySqlServerVersion("5.7.33");
+                    options.UseMySql(connectionString, serverVersion);
+                });
             }
             else if (DataType.UseSQLite)
             {
@@ -95,15 +93,15 @@ namespace WebAPI
             string secretKey = _configuration["JwtSecurity:SecretKey"];
             string publicKey = _configuration["JwtSecurity:PublicKey"];
 
-            if (!string.IsNullOrEmpty(secretKey))
-            {
-                securityKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(secretKey));
-            }
-            else if (!string.IsNullOrEmpty(publicKey))
+            if (!string.IsNullOrEmpty(publicKey))
             {
                 RSA rsa = RSA.Create(); // note: must not use 'using', must not dispose.
                 rsa.ImportRSAPublicKey(Convert.FromBase64String(publicKey), out _);
                 securityKey = new RsaSecurityKey(rsa);
+            }
+            else if (!string.IsNullOrEmpty(secretKey))
+            {
+                securityKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(secretKey));
             }
             else throw new SystemException("No security key specified!");
 

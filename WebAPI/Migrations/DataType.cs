@@ -19,10 +19,10 @@ namespace WebAPI.Migrations
 
         public static void SetDBMS(string value)
         {
-            Enum.TryParse<DBMS>(value, out dbms);
-
-            if (dbms == DBMS.Unknown)
-                dbms = DBMS.SQLite;
+            if (!Enum.TryParse(value, out dbms))
+            {
+                throw new SystemException("DBMS not specified or not valid.");
+            }
         }
 
         public static bool UseSQLServer => dbms == DBMS.SQLServer;
